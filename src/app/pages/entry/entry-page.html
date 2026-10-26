@@ -1,0 +1,67 @@
+@if (entry(); as e) {
+  <article class="entry" [class.entry--post]="e.type === 'post'">
+    <header class="page-header">
+      <div class="container container--narrow">
+        <nav class="breadcrumbs" aria-label="פירורי לחם">
+          <a routerLink="/">דף הבית</a>
+          @if (season(); as s) {
+            <span aria-hidden="true">›</span>
+            <a [routerLink]="['/tag', s.slug]">{{ s.name }}</a>
+          }
+          @if (session(); as s) {
+            <span aria-hidden="true">›</span>
+            <a [routerLink]="['/tag', s.slug]">{{ s.name }}</a>
+          }
+        </nav>
+        <h1 class="page-header__title">{{ e.title }}</h1>
+        @if (e.speaker) {
+          <p class="entry__speaker">{{ e.speaker }}</p>
+        }
+      </div>
+    </header>
+
+    <div class="container container--narrow">
+      @if (e.isEmpty) {
+        <p class="notice">התוכן של עמוד זה יעודכן בהמשך.</p>
+      } @else {
+        <app-rich-content [html]="e.html" />
+      }
+
+      @if (e.hasContactForm) {
+        <app-contact-form />
+      }
+
+      @if (termGroups().length) {
+        <aside class="entry__terms" aria-label="תגיות">
+          @for (group of termGroups(); track group.kind) {
+            <div class="entry__term-group">
+              <h2>{{ group.label }}</h2>
+              <ul class="chip-list">
+                @for (term of group.terms; track term.id) {
+                  <li>
+                    <a class="chip" [class.chip--session]="term.kind === 'session'" [routerLink]="['/tag', term.slug]">{{ term.name }}</a>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </aside>
+      }
+    </div>
+
+    @if (relatedCards().length) {
+      <section class="section container" aria-labelledby="related-title">
+        <header class="section__header">
+          <h2 class="section__title" id="related-title">{{ session() ? 'הרצאות נוספות מאותו מושב' : 'הרצאות קשורות' }}</h2>
+        </header>
+        <div class="grid grid--cards">
+          @for (card of relatedCards(); track card.id) {
+            <app-entry-card [card]="card" />
+          }
+        </div>
+      </section>
+    }
+  </article>
+} @else {
+  <app-not-found-page />
+}

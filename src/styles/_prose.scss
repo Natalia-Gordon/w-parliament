@@ -1,0 +1,249 @@
+// Typography for HTML imported from WordPress (rendered through <app-rich-content>)
+.prose {
+  display: block;
+  font-size: 1.1rem;
+  line-height: 1.85;
+  overflow-wrap: break-word;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  p {
+    margin: 0 0 1.15em;
+  }
+
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 1.8em 0 0.6em;
+    color: var(--brand-navy);
+  }
+
+  h2 {
+    font-size: 1.6rem;
+  }
+
+  h3 {
+    font-size: 1.35rem;
+  }
+
+  h4 {
+    font-size: 1.18rem;
+  }
+
+  h5,
+  h6 {
+    font-size: 1.05rem;
+  }
+
+  a {
+    color: var(--brand-red);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--brand-red) 40%, transparent);
+    text-decoration-thickness: 1px;
+
+    &:hover {
+      text-decoration-color: currentColor;
+    }
+  }
+
+  a[href$='.pdf']::after {
+    content: ' (PDF)';
+    font-size: 0.8em;
+    color: var(--text-muted);
+  }
+
+  a:has(> img)::after {
+    content: none;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 1.2em;
+    padding-inline-start: 1.5em;
+  }
+
+  li {
+    margin-bottom: 0.35em;
+  }
+
+  blockquote {
+    margin: 1.5em 0;
+    padding: 0.5em 1.25em;
+    border-inline-start: 4px solid var(--brand-red);
+    background: var(--surface-alt);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--text-muted);
+  }
+
+  hr {
+    margin: 2em 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  img {
+    border-radius: var(--radius);
+  }
+
+  figure {
+    margin: 1.5em 0;
+  }
+
+  figcaption {
+    margin-top: 0.5em;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .aligncenter,
+  .has-text-align-center {
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  img.aligncenter {
+    display: block;
+  }
+
+  .alignright {
+    float: right;
+    margin: 0.3em 0 1em 1.5em;
+  }
+
+  .alignleft {
+    float: left;
+    margin: 0.3em 1.5em 1em 0;
+  }
+
+  .has-small-font-size {
+    font-size: 0.9rem;
+  }
+
+  .table-wrap {
+    margin: 1.5em 0;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+  }
+
+  th,
+  td {
+    padding: 0.6em 0.8em;
+    border: 1px solid var(--border);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--surface-alt);
+  }
+
+  // Galleries ([gallery] shortcode)
+  .wp-gallery {
+    margin: 1.75em 0;
+  }
+
+  .wp-gallery--grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+    gap: 0.75rem;
+
+    img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+    }
+  }
+
+  .wp-gallery--slideshow {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: min(85%, 34rem);
+    gap: 0.75rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 0.75rem;
+    scrollbar-color: var(--border-strong) transparent;
+
+    .wp-gallery__item {
+      scroll-snap-align: start;
+    }
+
+    img {
+      width: 100%;
+      aspect-ratio: 3 / 2;
+      object-fit: cover;
+    }
+  }
+
+  .wp-gallery__item {
+    margin: 0;
+
+    a {
+      display: block;
+      overflow: hidden;
+      border-radius: var(--radius);
+      cursor: zoom-in;
+    }
+
+    img {
+      display: block;
+      border-radius: 0;
+      transition: transform 0.3s ease;
+    }
+
+    a:hover img {
+      transform: scale(1.04);
+    }
+  }
+
+  a[data-lightbox='image'] {
+    cursor: zoom-in;
+  }
+
+  // Video embeds
+  .wp-embed--video {
+    position: relative;
+    margin: 1.75em 0;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: #000;
+
+    iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+  }
+
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+@media (max-width: 640px) {
+  .prose {
+    font-size: 1.02rem;
+
+    .alignright,
+    .alignleft {
+      float: none;
+      margin: 1em auto;
+    }
+  }
+}

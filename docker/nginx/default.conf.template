@@ -1,0 +1,113 @@
+# Rendered at container start by the nginx image (envsubst): ${PORT} is provided by Cloud Run.
+# The $wp_redirect_* variables come from conf.d/wp-redirects.conf, generated from the WordPress export.
+
+server {
+    listen ${PORT} default_server;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+    charset utf-8;
+    server_tokens off;
+
+    # TLS terminates at the Google front end; keep redirects relative to the public host
+    absolute_redirect off;
+    port_in_redirect off;
+
+    set_real_ip_from 0.0.0.0/0;
+    real_ip_header X-Forwarded-For;
+    real_ip_recursive on;
+
+    gzip on;
+    gzip_static on;
+    gzip_vary on;
+    gzip_comp_level 6;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/plain text/css text/xml application/javascript application/json application/xml image/svg+xml;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    # Legacy WordPress URLs: /?p=123, /?page_id=45, /?attachment_id=6, attachment pages, removed pages
+    if ($wp_redirect_post) {
+        return 301 $wp_redirect_post;
+    }
+    if ($wp_redirect_page) {
+        return 301 $wp_redirect_page;
+    }
+    if ($wp_redirect_attachment) {
+        return 301 $wp_redirect_attachment;
+    }
+    if ($wp_redirect_path) {
+        return 301 $wp_redirect_path;
+    }
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location = / {
+        if ($arg_s) {
+            return 301 /search?q=$arg_s;
+        }
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files /index.html =404;
+    }
+
+    # Prerendered pages: /slug and the WordPress style /slug/ both map to /slug/index.html
+    location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri $uri/index.html =404;
+    }
+
+    # Content-hashed bundles produced by the Angular build
+    location ~* "^/[^/]+-[A-Za-z0-9_-]{8,}\.(?:js|css|mjs)$" {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location ^~ /content/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri =404;
+    }
+
+    location ^~ /wp-content/uploads/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=2592000" always;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=2592000" always;
+        try_files /favicon.ico /wp-content/uploads/2016/06/cropped-cropped-121-32x32.jpg =404;
+    }
+
+    # WordPress endpoints that no longer exist
+    location ~* (?:\.php$|^/wp-admin|^/wp-json|^/wp-includes) {
+        access_log off;
+        return 404;
+    }
+
+    location ~ /\. {
+        deny all;
+    }
+
+    # Unknown URLs: real 404 status, rendered by the Angular app on the client
+    error_page 404 /index.csr.html;
+    location = /index.csr.html {
+        internal;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+    }
+}

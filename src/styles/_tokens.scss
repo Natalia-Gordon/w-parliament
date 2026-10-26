@@ -1,0 +1,30 @@
+:root {
+  // Brand colors taken from the Women's Parliament logo
+  --brand-navy: #1d2b6b;
+  --brand-red: #c8102e;
+  --brand-wine: #7f000e;
+
+  --bg: #faf8f6;
+  --surface: #ffffff;
+  --surface-alt: #f3eeeb;
+  --text: #22202a;
+  --text-muted: #5f5a66;
+  --border: #e7e1dd;
+  --border-strong: #cfc6c1;
+  --focus: #2f6fed;
+
+  --font-sans: 'Heebo', 'Assistant', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+
+  --radius: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 22px;
+
+  --shadow-sm: 0 1px 2px rgb(29 43 107 / 6%), 0 1px 3px rgb(29 43 107 / 6%);
+  --shadow-md: 0 8px 24px rgb(29 43 107 / 10%);
+  --shadow-lg: 0 18px 48px rgb(29 43 107 / 16%);
+
+  --container: 1240px;
+  --container-narrow: 820px;
+
+  color-scheme: light;
+}

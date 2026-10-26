@@ -1,0 +1,99 @@
+.tags {
+  display: grid;
+  gap: 2.5rem;
+}
+
+.tags__section h2 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  color: var(--brand-navy);
+}
+
+.tags__count {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.seasons-list,
+.sessions-list,
+.people-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seasons-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.sessions-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3.25rem, 1fr));
+  gap: 0.5rem;
+}
+
+.session-pill {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--brand-navy);
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--brand-red);
+    border-color: var(--brand-red);
+    color: #fff;
+  }
+}
+
+.tags__filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 28rem;
+
+  label {
+    font-weight: 600;
+  }
+}
+
+.people-list {
+  columns: 4 13rem;
+  column-gap: 2rem;
+
+  li {
+    break-inside: avoid;
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: var(--brand-red);
+      text-decoration: underline;
+    }
+  }
+
+  .chip__count {
+    margin-inline-start: 0.35rem;
+  }
+}
+
+.tags__empty {
+  color: var(--text-muted);
+}

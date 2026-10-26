@@ -1,0 +1,111 @@
+@let v = view();
+<section class="hero">
+  @if (site()?.headerImage; as header) {
+    <img class="hero__bg" [src]="header.src" alt="" fetchpriority="high" />
+  }
+  <div class="hero__inner container">
+    <p class="hero__kicker">מאז נובמבר 1999</p>
+    <h1 class="hero__title">{{ site()?.name }}</h1>
+    <p class="hero__tagline">{{ site()?.tagline }}</p>
+    <div class="hero__actions">
+      <a class="btn btn--light" routerLink="/posts">לארכיון ההרצאות</a>
+      <a class="btn btn--ghost" routerLink="/tags">מפתח נושאים ודוברות</a>
+    </div>
+  </div>
+</section>
+
+<section class="stats" aria-label="פרלמנט נשים במספרים">
+  <div class="stats__inner container">
+    <div class="stat">
+      <span class="stat__value">{{ v.stats.sessions }}+</span><span class="stat__label">מושבים</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value">{{ v.stats.posts }}</span><span class="stat__label">הרצאות ותקצירים</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value">{{ v.stats.speakers }}+</span><span class="stat__label">דוברות ודוברים</span>
+    </div>
+  </div>
+</section>
+
+@if (v.page; as page) {
+  <section class="section container">
+    <app-rich-content class="home-about" [html]="page.html" />
+  </section>
+}
+
+<section class="section section--tinted">
+  <div class="container">
+    <header class="section__header">
+      <h2 class="section__title">מושבי הפרלמנט לפי שנים</h2>
+      <p class="section__lead">תקצירי ההרצאות שהוצגו במושבים, מסודרים לפי שנות הפעילות</p>
+    </header>
+    <ul class="seasons">
+      @for (season of v.seasons; track season.id) {
+        @let parts = seasonParts(season.name);
+        <li>
+          <a class="season" [routerLink]="['/tag', season.slug]" [attr.aria-label]="season.name">
+            <span class="season__name">{{ parts.label }}</span>
+            @if (parts.years) {
+              <span class="season__years" dir="ltr">{{ parts.years }}</span>
+            }
+            <span class="season__count">{{ season.count }} הרצאות</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </div>
+</section>
+
+<section class="section container">
+  <header class="section__header section__header--row">
+    <div>
+      <h2 class="section__title">הנקראים ביותר</h2>
+      <p class="section__lead">ההרצאות והמאמרים שזכו למספר הקריאות הגבוה ביותר</p>
+    </div>
+    <a class="link-more" routerLink="/posts">לכל ההרצאות ←</a>
+  </header>
+  <div class="grid grid--cards">
+    @for (card of v.popular; track card.id) {
+      <app-entry-card [card]="card" />
+    }
+  </div>
+</section>
+
+<section class="section container">
+  <header class="section__header section__header--row">
+    <div>
+      <h2 class="section__title">נושאים מרכזיים</h2>
+      <p class="section__lead">הסוגיות שעלו שוב ושוב בדיוני הפרלמנט</p>
+    </div>
+    <a class="link-more" routerLink="/tags">לכל הנושאים ←</a>
+  </header>
+  <ul class="chip-list chip-list--lg">
+    @for (topic of v.topics; track topic.id) {
+      <li>
+        <a class="chip" [routerLink]="['/tag', topic.slug]">{{ topic.name }} <span class="chip__count">{{ topic.count }}</span></a>
+      </li>
+    }
+  </ul>
+</section>
+
+<section class="section container">
+  <div class="cta">
+    <div>
+      <h2>פרלמנט נשים פועל בהתנדבות מלאה</h2>
+      <p>נשמח לתמיכתכן ולתמיכתכם כדי להמשיך את הפעילות ולתחזק את האתר.</p>
+    </div>
+    <div class="cta__actions">
+      @for (item of site()?.menus?.footer ?? []; track item.title) {
+        @if (item.path !== '/') {
+          <a class="btn btn--light" [routerLink]="item.path | routePath">{{ item.title }}</a>
+        }
+      }
+      @for (item of site()?.menus?.main ?? []; track item.title) {
+        @if (item.title.includes('תרומ')) {
+          <a class="btn btn--primary-light" [routerLink]="item.path | routePath">{{ item.title }}</a>
+        }
+      }
+    </div>
+  </div>
+</section>

@@ -1,0 +1,67 @@
+<header class="page-header">
+  <div class="container container--narrow">
+    <h1 class="page-header__title">חיפוש באתר</h1>
+    <p class="page-header__lead">חיפוש לפי כותרת, שם הדוברת, נושא או מילים מתוך ההרצאות</p>
+    <form class="search-box" role="search" (submit)="$event.preventDefault()">
+      <label class="visually-hidden" for="search-input">מילות חיפוש</label>
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+      <input
+        id="search-input"
+        type="search"
+        placeholder="לדוגמה: חזקת הגיל הרך, אסתר הרצוג, תקציב…"
+        autocomplete="off"
+        [value]="query()"
+        (input)="onInput($event)"
+        autofocus
+      />
+    </form>
+  </div>
+</header>
+
+<div class="container container--narrow" aria-live="polite">
+  @if (loadError()) {
+    <p class="notice notice--error">לא ניתן לטעון את אינדקס החיפוש. נא לרענן את העמוד.</p>
+  } @else if (!engine()) {
+    @if (query()) {
+      <p class="search__status">טוען…</p>
+    }
+  } @else if (query().trim()) {
+    <p class="search__status">
+      @if (results().length) {
+        נמצאו {{ results().length }} תוצאות עבור „{{ query().trim() }}”
+      } @else {
+        לא נמצאו תוצאות עבור „{{ query().trim() }}”. נסו מילים אחרות או <a routerLink="/tags">עיינו במפתח הנושאים</a>.
+      }
+    </p>
+    <ol class="results">
+      @for (hit of shown(); track hit.card.id) {
+        <li class="result">
+          <a class="result__title" [routerLink]="hit.card.path | routePath">{{ hit.card.title }}</a>
+          @if (hit.card.speaker || hit.card.sessionTerm) {
+            <p class="result__meta">
+              {{ hit.card.speaker }}
+              @if (hit.card.speaker && hit.card.sessionTerm) {
+                ·
+              }
+              {{ hit.card.sessionTerm?.name }}
+            </p>
+          }
+          <p class="result__snippet">
+            @for (part of hit.snippet; track $index) {
+              @if (part.mark) {
+                <mark>{{ part.text }}</mark>
+              } @else {
+                {{ part.text }}
+              }
+            }
+          </p>
+        </li>
+      }
+    </ol>
+    @if (shown().length < results().length) {
+      <div class="results__more">
+        <button class="btn btn--outline" type="button" (click)="showMore()">הצגת תוצאות נוספות</button>
+      </div>
+    }
+  }
+</div>

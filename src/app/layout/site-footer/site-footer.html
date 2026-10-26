@@ -1,0 +1,31 @@
+<footer class="footer">
+  <div class="footer__inner container">
+    <section class="footer__about">
+      <p class="footer__name">{{ site()?.name }}</p>
+      <p>{{ site()?.tagline }}</p>
+      <p class="footer__org">פרויקט של תנועת ש.י.ן – לשוויון ייצוג נשים (ע"ר)</p>
+    </section>
+
+    <nav class="footer__col" aria-label="ניווט באתר">
+      <h2>ניווט</h2>
+      <ul>
+        @for (item of mainLinks(); track item.title) {
+          <li><a [routerLink]="item.path | routePath">{{ item.title }}</a></li>
+        }
+      </ul>
+    </nav>
+
+    <nav class="footer__col" aria-label="ארכיון">
+      <h2>ארכיון</h2>
+      <ul>
+        @for (item of archive(); track item.title) {
+          <li><a [routerLink]="item.path | routePath">{{ item.title }}</a></li>
+        }
+        <li><a routerLink="/search">חיפוש באתר</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="footer__bottom">
+    <div class="container">© {{ site()?.year }} {{ site()?.name }} · תנועת ש.י.ן – לשוויון ייצוג נשים. כל הזכויות שמורות.</div>
+  </div>
+</footer>

@@ -1,0 +1,64 @@
+@if (!endpoint()) {
+  <p class="notice">טופס יצירת הקשר אינו זמין כרגע. נא לנסות שוב מאוחר יותר.</p>
+} @else if (state() === 'sent') {
+  <div class="notice notice--success" role="status">
+    <strong>תודה! ההודעה נשלחה בהצלחה.</strong>
+    <span>נחזור אליכן ואליכם בהקדם.</span>
+  </div>
+} @else {
+  <form class="contact" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <p class="contact__hint">שדות המסומנים ב-* הם שדות חובה</p>
+
+    <div class="field">
+      <label for="cf-name">שם *</label>
+      <input id="cf-name" type="text" formControlName="name" autocomplete="name" [attr.aria-invalid]="invalid('name')" />
+      @if (invalid('name')) {
+        <span class="field__error">נא למלא שם</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="cf-email">דואר אלקטרוני *</label>
+      <input id="cf-email" type="email" dir="ltr" formControlName="email" autocomplete="email" [attr.aria-invalid]="invalid('email')" />
+      @if (invalid('email')) {
+        <span class="field__error">נא למלא כתובת דואר אלקטרוני תקינה</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="cf-phone">טלפון</label>
+      <input id="cf-phone" type="tel" dir="ltr" formControlName="phone" autocomplete="tel" [attr.aria-invalid]="invalid('phone')" />
+      @if (invalid('phone')) {
+        <span class="field__error">מספר הטלפון אינו תקין</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="cf-subject">נושא *</label>
+      <input id="cf-subject" type="text" formControlName="subject" [attr.aria-invalid]="invalid('subject')" />
+      @if (invalid('subject')) {
+        <span class="field__error">נא למלא נושא</span>
+      }
+    </div>
+
+    <div class="field field--full">
+      <label for="cf-message">ההודעה שלך</label>
+      <textarea id="cf-message" rows="6" formControlName="message"></textarea>
+    </div>
+
+    <div class="contact__honeypot" aria-hidden="true">
+      <label for="cf-website">אתר</label>
+      <input id="cf-website" type="text" formControlName="website" tabindex="-1" autocomplete="off" />
+    </div>
+
+    @if (state() === 'error') {
+      <p class="notice notice--error field--full" role="alert">אירעה שגיאה בשליחת ההודעה. נא לנסות שוב מאוחר יותר.</p>
+    }
+
+    <div class="field--full">
+      <button class="btn btn--primary" type="submit" [disabled]="state() === 'sending'">
+        {{ state() === 'sending' ? 'שולח…' : 'שליחה' }}
+      </button>
+    </div>
+  </form>
+}

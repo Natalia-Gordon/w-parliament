@@ -1,0 +1,70 @@
+@let v = view();
+<header class="page-header">
+  <div class="container">
+    <nav class="breadcrumbs" aria-label="פירורי לחם">
+      <a routerLink="/">דף הבית</a>
+      <span aria-hidden="true">›</span>
+      <span>מפתח נושאים</span>
+    </nav>
+    <h1 class="page-header__title">מפתח נושאים, מושבים ודוברות</h1>
+    <p class="page-header__lead">ניווט בארכיון פרלמנט נשים לפי שנת פעילות, מושב, נושא או דוברת</p>
+  </div>
+</header>
+
+<div class="container tags">
+  <section class="tags__section">
+    <h2>שנות פעילות</h2>
+    <ul class="seasons-list">
+      @for (term of v.seasons; track term.id) {
+        <li>
+          <a class="chip chip--navy" [routerLink]="['/tag', term.slug]">{{ term.name }} <span class="chip__count">{{ term.count }}</span></a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="tags__section">
+    <h2>מושבים</h2>
+    <ul class="sessions-list">
+      @for (term of v.sessions; track term.id) {
+        <li>
+          <a class="session-pill" [routerLink]="['/tag', term.slug]" [attr.aria-label]="term.name + ', ' + term.count + ' הרצאות'">{{ term.order }}</a>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <div class="tags__filter">
+    <label for="tag-filter">סינון נושאים ודוברות</label>
+    <input id="tag-filter" type="search" placeholder="הקלידו שם או נושא…" [value]="filter()" (input)="onFilter($event)" />
+  </div>
+
+  <section class="tags__section">
+    <h2>נושאים <span class="tags__count">({{ topics().length }})</span></h2>
+    <ul class="chip-list">
+      @for (term of topics(); track term.id) {
+        <li>
+          <a class="chip" [routerLink]="['/tag', term.slug]">{{ term.name }} <span class="chip__count">{{ term.count }}</span></a>
+        </li>
+      } @empty {
+        <li class="tags__empty">לא נמצאו נושאים</li>
+      }
+    </ul>
+  </section>
+
+  <section class="tags__section">
+    <h2>דוברות ודוברים <span class="tags__count">({{ people().length }})</span></h2>
+    <ul class="people-list">
+      @for (term of people(); track term.id) {
+        <li>
+          <a [routerLink]="['/tag', term.slug]">{{ term.name }}</a>
+          @if (term.count > 1) {
+            <span class="chip__count">{{ term.count }}</span>
+          }
+        </li>
+      } @empty {
+        <li class="tags__empty">לא נמצאו דוברות</li>
+      }
+    </ul>
+  </section>
+</div>

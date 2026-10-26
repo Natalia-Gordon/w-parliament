@@ -1,0 +1,86 @@
+<a class="skip-link" href="#main">דילוג לתוכן הראשי</a>
+<header class="header" [class.is-open]="menuOpen()">
+  <div class="header__inner container">
+    <a class="brand" routerLink="/" [attr.aria-label]="(site()?.name ?? 'פרלמנט נשים') + ' – דף הבית'">
+      @if (site()?.logo; as logo) {
+        <img class="brand__logo" [src]="logo.src" [attr.width]="logo.width" [attr.height]="logo.height" alt="" />
+      } @else {
+        <span class="brand__name">{{ site()?.name }}</span>
+      }
+    </a>
+
+    <nav id="main-nav" class="nav" aria-label="ניווט ראשי">
+      <ul class="nav__list">
+        @for (item of menu(); track item.title; let i = $index) {
+          <li
+            class="nav__item"
+            [class.has-children]="item.children"
+            [class.nav__item--mega]="hasGrandchildren(item)"
+            [class.is-expanded]="expanded() === i"
+          >
+            <a
+              class="nav__link"
+              [routerLink]="item.path | routePath"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              >{{ item.title }}</a
+            >
+            @if (item.children; as children) {
+              <button
+                class="nav__toggle"
+                type="button"
+                [attr.aria-expanded]="expanded() === i"
+                [attr.aria-label]="'תפריט משנה: ' + item.title"
+                (click)="toggle(i)"
+              >
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              <div class="nav__panel" [class.nav__panel--mega]="hasGrandchildren(item)">
+                @if (hasGrandchildren(item)) {
+                  @for (group of children; track group.title) {
+                    <div class="nav__group">
+                      <a class="nav__group-title" [routerLink]="group.path | routePath">{{ group.title }}</a>
+                      @if (group.children; as leaves) {
+                        <ul>
+                          @for (leaf of leaves; track leaf.title) {
+                            <li><a [routerLink]="leaf.path | routePath">{{ leaf.title }}</a></li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  }
+                } @else {
+                  <ul>
+                    @for (child of children; track child.title) {
+                      <li><a [routerLink]="child.path | routePath">{{ child.title }}</a></li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a class="icon-btn" routerLink="/search" aria-label="חיפוש באתר" title="חיפוש">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+      </a>
+      <button
+        class="icon-btn menu-btn"
+        type="button"
+        aria-controls="main-nav"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="menuOpen() ? 'סגירת התפריט' : 'פתיחת התפריט'"
+        (click)="toggleMenu()"
+      >
+        @if (menuOpen()) {
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        } @else {
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        }
+      </button>
+    </div>
+  </div>
+</header>

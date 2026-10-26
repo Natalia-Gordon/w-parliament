@@ -1,0 +1,25 @@
+@let item = card();
+<article class="card" [class.card--with-image]="item.image">
+  @if (item.image; as image) {
+    <div class="card__media">
+      <img [src]="image.src" alt="" loading="lazy" decoding="async" [attr.width]="image.width" [attr.height]="image.height" />
+    </div>
+  }
+  <div class="card__body">
+    @if (item.sessionTerm; as session) {
+      <a class="chip chip--session card__session" [routerLink]="['/tag', session.slug]">{{ session.name }}</a>
+    }
+    @if (headingLevel() === 2) {
+      <h2 class="card__title"><a class="card__link" [routerLink]="item.path | routePath">{{ item.title }}</a></h2>
+    } @else {
+      <h3 class="card__title"><a class="card__link" [routerLink]="item.path | routePath">{{ item.title }}</a></h3>
+    }
+    @if (item.speaker) {
+      <p class="card__speaker">{{ item.speaker }}</p>
+    }
+    @if (item.excerpt) {
+      <p class="card__excerpt">{{ item.excerpt }}</p>
+    }
+    <span class="card__more" aria-hidden="true">להמשך קריאה ←</span>
+  </div>
+</article>
