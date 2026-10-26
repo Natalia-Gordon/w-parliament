@@ -54,25 +54,23 @@ docker run --rm -p 8080:8080 women-parliament
 
 ## פריסה ל-Cloud Run
 
-פעם אחת לכל פרויקט:
+הפרויקט: `shin-512818`. מאגר התמונות: `us-central1-docker.pkg.dev/shin-512818/w-parliament`. שירות Cloud Run: `w-parliament` באזור `us-central1` (https://w-parliament-1056654439816.us-central1.run.app).
+
+**פריסה אוטומטית מ-GitHub:** כל push ל-`main` מריץ את `.github/workflows/google-cloudrun-docker.yml`, שבונה את התמונה, דוחף אותה ל-Artifact Registry ופורס ל-Cloud Run. ההגדרות שצריך לעשות פעם אחת (Workload Identity, הרשאות, משתני מאגר) מפורטות בראש הקובץ.
+
+**פריסה ידנית** (בעזרת `cloudbuild.yaml`):
 
 ```bash
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
-gcloud artifacts repositories create web --repository-format=docker --location=me-west1
+gcloud builds submit --config cloudbuild.yaml --project shin-512818 \
+  --substitutions=_SITE_URL=https://womenparliament.org,_CONTACT_FORM_ENDPOINT=https://formspree.io/f/XXXX
 ```
 
-בנייה ופריסה (בעזרת `cloudbuild.yaml`):
+**דחיפת תמונה מהמחשב המקומי:**
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml \
-  --substitutions=_REGION=me-west1,_SITE_URL=https://womenparliament.org,_CONTACT_FORM_ENDPOINT=https://formspree.io/f/XXXX
+gcloud auth configure-docker us-central1-docker.pkg.dev
+docker build -t us-central1-docker.pkg.dev/shin-512818/w-parliament/w-parliament:latest .
+docker push us-central1-docker.pkg.dev/shin-512818/w-parliament/w-parliament:latest
 ```
 
-אפשר גם לפרוס ישירות מהקוד. במקרה הזה build args לא מועברים, ולכן חלים ערכי ברירת המחדל שב-Dockerfile:
-
-```bash
-gcloud run deploy women-parliament --source . --region me-west1 --allow-unauthenticated --port 8080 --memory 256Mi
-```
-
-לחיבור הדומיין מומלץ להשתמש ב-Global external Application Load Balancer עם serverless NEG, ואפשר להוסיף Cloud CDN.
-‏Domain mapping של Cloud Run זמין רק בחלק מהאזורים.
+לחיבור הדומיין: באזור `us-central1` אפשר להשתמש ב-Domain mapping של Cloud Run (בשלב Preview). לפרודקשן מומלץ Global external Application Load Balancer עם serverless NEG, ואפשר להוסיף Cloud CDN.

@@ -1,44 +1,46 @@
-# This workflow build and push a Docker container to Google Artifact Registry
-# and deploy it on Cloud Run when a commit is pushed to the "main"
-# branch.
+# Builds the Docker image, pushes it to Artifact Registry
+# (us-central1-docker.pkg.dev/shin-512818/w-parliament) and deploys it to Cloud Run
+# on every push to "main".
 #
-# To configure this workflow:
+# One-time setup:
 #
-# 1. Enable the following Google Cloud APIs:
+# 1. Enable the APIs: artifactregistry.googleapis.com, run.googleapis.com, iamcredentials.googleapis.com
 #
-#    - Artifact Registry (artifactregistry.googleapis.com)
-#    - Cloud Run (run.googleapis.com)
-#    - IAM Credentials API (iamcredentials.googleapis.com)
+# 2. Create a Workload Identity Provider for this GitHub repository:
+#    https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation
+#    and save its full resource name as the repository variable GCP_WORKLOAD_IDENTITY_PROVIDER
+#    (Settings -> Secrets and variables -> Actions -> Variables), e.g.
+#    projects/123456789/locations/global/workloadIdentityPools/github/providers/w-parliament
 #
-#    You can learn more about enabling APIs at
-#    https://support.google.com/googleapi/answer/6158841.
-#
-# 2. Create and configure a Workload Identity Provider for GitHub:
-#    https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation.
-#
-#    Depending on how you authenticate, you will need to grant an IAM principal
-#    permissions on Google Cloud:
-#
-#    - Artifact Registry Administrator (roles/artifactregistry.admin)
+#    Grant the GitHub principal:
+#    - Artifact Registry Writer (roles/artifactregistry.writer) on the w-parliament repository
 #    - Cloud Run Developer (roles/run.developer)
+#    - Service Account User (roles/iam.serviceAccountUser) on the Cloud Run runtime service account
 #
-#    You can learn more about setting IAM permissions at
-#    https://cloud.google.com/iam/docs/manage-access-other-resources
+# 3. Make the service public once (Cloud Run Developer cannot change IAM policies):
+#    gcloud run services add-iam-policy-binding w-parliament --region=us-central1 \
+#      --member=allUsers --role=roles/run.invoker --project=shin-512818
 #
-# 3. Change the values in the "env" block to match your values.
+# Optional repository variables: SITE_URL (default https://womenparliament.org), CONTACT_FORM_ENDPOINT.
 
 name: 'Build and Deploy to Cloud Run'
 
 on:
   push:
     branches:
-      - '"main"'
+      - 'main'
+  workflow_dispatch:
+
+concurrency:
+  group: 'cloud-run-deploy'
+  cancel-in-progress: false
 
 env:
-  PROJECT_ID: 'my-project' # TODO: update to your Google Cloud project ID
-  REGION: 'us-central1' # TODO: update to your region
-  SERVICE: 'my-service' # TODO: update to your service name
-  WORKLOAD_IDENTITY_PROVIDER: 'projects/123456789/locations/global/workloadIdentityPools/my-pool/providers/my-provider' # TODO: update to your workload identity provider
+  PROJECT_ID: 'shin-512818'
+  REGION: 'us-central1'
+  REPOSITORY: 'w-parliament'
+  SERVICE: 'w-parliament'
+  WORKLOAD_IDENTITY_PROVIDER: '${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
 
 jobs:
   deploy:
@@ -52,19 +54,14 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332' # actions/checkout@v4
 
-      # Configure Workload Identity Federation and generate an access token.
-      #
-      # See https://github.com/google-github-actions/auth for more options,
-      # including authenticating via a JSON credentials file.
       - id: 'auth'
         name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@f112390a2df9932162083945e46d439060d66ec2' # google-github-actions/auth@v2
         with:
+          project_id: '${{ env.PROJECT_ID }}'
           workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
 
-      # BEGIN - Docker auth and build
-      #
-      # If you already have a container image, you can omit these steps.
+      # Equivalent of: gcloud auth configure-docker us-central1-docker.pkg.dev
       - name: 'Docker Auth'
         uses: 'docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567' # docker/login-action@v3
         with:
@@ -73,23 +70,30 @@ jobs:
           registry: '${{ env.REGION }}-docker.pkg.dev'
 
       - name: 'Build and Push Container'
+        env:
+          SITE_URL: '${{ vars.SITE_URL || ''https://womenparliament.org'' }}'
+          CONTACT_FORM_ENDPOINT: '${{ vars.CONTACT_FORM_ENDPOINT }}'
         run: |-
-          DOCKER_TAG="$${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}"
-          docker build --tag "${DOCKER_TAG}" .
-          docker push "${DOCKER_TAG}"
-      - name: 'Deploy to Cloud Run'
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}"
+          docker build \
+            --build-arg SITE_URL="${SITE_URL}" \
+            --build-arg CONTACT_FORM_ENDPOINT="${CONTACT_FORM_ENDPOINT}" \
+            --tag "${IMAGE}:${{ github.sha }}" \
+            --tag "${IMAGE}:latest" \
+            .
+          docker push --all-tags "${IMAGE}"
 
-        # END - Docker auth and build
-
+      - id: 'deploy'
+        name: 'Deploy to Cloud Run'
         uses: 'google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17' # google-github-actions/deploy-cloudrun@v2
         with:
           service: '${{ env.SERVICE }}'
           region: '${{ env.REGION }}'
-          # NOTE: If using a pre-built image, update the image name below:
+          image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}'
+          # Lowest-cost profile for a static nginx site: request-based billing (CPU throttled outside requests),
+          # scale to zero, gen1 (allows < 512Mi), high concurrency so one instance absorbs bursts.
+          flags: '--port=8080 --cpu=1 --memory=256Mi --concurrency=500 --min-instances=0 --max-instances=3 --timeout=30s --cpu-throttling --no-cpu-boost --execution-environment=gen1'
 
-          image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}'
-      # If required, use the Cloud Run URL output in later steps
       - name: 'Show output'
-        run: |2-
-
-          echo ${{ steps.deploy.outputs.url }}
+        run: |-
+          echo "Deployed: ${{ steps.deploy.outputs.url }}"

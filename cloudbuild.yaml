@@ -1,19 +1,19 @@
 # Build the image, push it to Artifact Registry and deploy it to Cloud Run.
 #
-#   gcloud builds submit --config cloudbuild.yaml \
-#     --substitutions=_REGION=me-west1,_SITE_URL=https://womenparliament.org
+#   gcloud builds submit --config cloudbuild.yaml --project shin-512818 \
+#     --substitutions=_SITE_URL=https://womenparliament.org
 #
 # Prerequisite (once): an Artifact Registry Docker repository named ${_REPOSITORY} in ${_REGION}.
 
 substitutions:
-  _REGION: me-west1
-  _REPOSITORY: web
-  _SERVICE: women-parliament
+  _REGION: us-central1
+  _REPOSITORY: w-parliament
+  _SERVICE: w-parliament
   _SITE_URL: https://womenparliament.org
   _CONTACT_FORM_ENDPOINT: ''
 
+# The default build machine (e2-standard-2) is covered by the Cloud Build free tier; larger machine types are not.
 options:
-  machineType: E2_HIGHCPU_8
   logging: CLOUD_LOGGING_ONLY
   dynamicSubstitutions: true
 
@@ -46,12 +46,13 @@ steps:
       - --port=8080
       - --cpu=1
       - --memory=256Mi
-      - --concurrency=250
+      - --concurrency=500
       - --min-instances=0
-      - --max-instances=10
-      - --timeout=60s
-      - --cpu-boost
-      - --execution-environment=gen2
+      - --max-instances=3
+      - --timeout=30s
+      - --cpu-throttling
+      - --no-cpu-boost
+      - --execution-environment=gen1
 
 images:
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
