@@ -77,19 +77,52 @@ jobs:
           password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ env.REGION }}-docker.pkg.dev'
 
+      # Version tag shown in Artifact Registry, e.g. 20261027-1205-29b72b1-run42
+      # (UTC date-time, short commit, GitHub Actions run number).
+      - id: 'meta'
+        name: 'Image metadata'
+        run: |-
+          CREATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          VERSION="$(date -u +%Y%m%d-%H%M)-${SHORT_SHA}-run${GITHUB_RUN_NUMBER}"
+          {
+            echo "image=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}"
+            echo "version=${VERSION}"
+            echo "created=${CREATED}"
+            echo "short_sha=${SHORT_SHA}"
+            echo "repo_label=$(echo "${GITHUB_REPOSITORY}" | tr 'A-Z/' 'a-z_')"
+          } >> "${GITHUB_OUTPUT}"
+          echo "Image version: ${VERSION}"
+
       - name: 'Build and Push Container'
         env:
           SITE_URL: '${{ vars.SITE_URL || ''https://womenparliament.org'' }}'
           CONTACT_FORM_ENDPOINT: '${{ vars.CONTACT_FORM_ENDPOINT }}'
+          IMAGE: '${{ steps.meta.outputs.image }}'
+          VERSION: '${{ steps.meta.outputs.version }}'
         run: |-
-          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           docker build \
             --build-arg SITE_URL="${SITE_URL}" \
             --build-arg CONTACT_FORM_ENDPOINT="${CONTACT_FORM_ENDPOINT}" \
-            --tag "${IMAGE}:${{ github.sha }}" \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --label "org.opencontainers.image.version=${VERSION}" \
+            --label "org.opencontainers.image.created=${{ steps.meta.outputs.created }}" \
+            --label "org.opencontainers.image.ref.name=${GITHUB_REF_NAME}" \
+            --label "com.github.actions.run-url=${RUN_URL}" \
+            --label "com.github.actions.workflow=${GITHUB_WORKFLOW}" \
+            --tag "${IMAGE}:${VERSION}" \
+            --tag "${IMAGE}:sha-${GITHUB_SHA}" \
             --tag "${IMAGE}:latest" \
             .
           docker push --all-tags "${IMAGE}"
+          {
+            echo "### Image pushed"
+            echo "- Version: \`${VERSION}\`"
+            echo "- Commit: [${GITHUB_SHA::7}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA})"
+            echo "- Image: \`${IMAGE}:${VERSION}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - id: 'deploy'
         name: 'Deploy to Cloud Run'
@@ -97,11 +130,18 @@ jobs:
         with:
           service: '${{ env.SERVICE }}'
           region: '${{ env.REGION }}'
-          image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}'
+          image: '${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}'
+          # Revision name: w-parliament-<short sha>-r<run number>-<attempt>
+          suffix: '${{ steps.meta.outputs.short_sha }}-r${{ github.run_number }}-${{ github.run_attempt }}'
+          # managed-by and commit-sha labels are added by the action itself
+          labels: |-
+            github-repo=${{ steps.meta.outputs.repo_label }}
+            github-run-id=${{ github.run_id }}
           # Lowest-cost profile for a static nginx site: request-based billing (CPU throttled outside requests),
           # scale to zero, gen1 (allows < 512Mi), high concurrency so one instance absorbs bursts.
           flags: '--allow-unauthenticated --port=8080 --cpu=1 --memory=256Mi --concurrency=500 --min-instances=0 --max-instances=3 --timeout=30s --cpu-throttling --no-cpu-boost --execution-environment=gen1'
 
       - name: 'Show output'
         run: |-
-          echo "Deployed: ${{ steps.deploy.outputs.url }}"
+          echo "Deployed ${{ steps.meta.outputs.version }}: ${{ steps.deploy.outputs.url }}"
+          echo "- Cloud Run: ${{ steps.deploy.outputs.url }}" >> "${GITHUB_STEP_SUMMARY}"
