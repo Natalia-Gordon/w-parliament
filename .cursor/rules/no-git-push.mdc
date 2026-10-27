@@ -1,0 +1,22 @@
+---
+description: Never commit or push to GitHub; the user publishes changes herself
+alwaysApply: true
+---
+
+# Git: no commits or pushes
+
+The repository owner commits and pushes all changes herself.
+
+- Never run `git commit`, `git push`, `git push --force`, `git tag`, or anything that rewrites or publishes history
+  (including `git merge`, `git rebase`, `git reset` on shared branches).
+- Do not change remotes (`git remote set-url/add/remove`).
+- Read-only git commands are fine: `git status`, `git diff`, `git log`, `git show`, `git fetch`.
+- After editing files, finish with a short list of the changed files so the user can review and push.
+
+```bash
+# ❌ Don't
+git add . && git commit -m "fix" && git push
+
+# ✅ Do
+git status --short   # then report the changed files to the user
+```
