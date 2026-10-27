@@ -50,7 +50,7 @@ docker run --rm -p 8080:8080 women-parliament
 
 התמונה בנויה משני שלבים: Node 24 לבנייה, ו-`nginx-unprivileged` (שרץ כמשתמש שאינו root) בזמן ריצה, עם האזנה ל-`$PORT`.
 תצורת nginx כוללת קבצים דחוסים מראש (gzip_static), cache ארוך לקבצים עם hash, כותרות אבטחה (CSP ו-HSTS),
-‏`/healthz`, הפניות מכתובות WordPress, וסטטוס 404 אמיתי לכתובות לא מוכרות.
+‏`/health`, הפניות מכתובות WordPress, וסטטוס 404 אמיתי לכתובות לא מוכרות.
 
 ## פריסה ל-Cloud Run
 

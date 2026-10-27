@@ -42,7 +42,8 @@ server {
         return 301 $wp_redirect_path;
     }
 
-    location = /healthz {
+    # Not /healthz: Cloud Run reserves paths ending in "z" and never forwards them to the container
+    location = /health {
         access_log off;
         default_type text/plain;
         return 200 "ok\n";
