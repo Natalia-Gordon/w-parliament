@@ -6,16 +6,22 @@
 #
 # 1. Enable the APIs: artifactregistry.googleapis.com, run.googleapis.com, iamcredentials.googleapis.com
 #
-# 2. Create a Workload Identity Provider for this GitHub repository:
-#    https://github.com/google-github-actions/auth#preferred-direct-workload-identity-federation
-#    and save its full resource name as the repository variable GCP_WORKLOAD_IDENTITY_PROVIDER
-#    (Settings -> Secrets and variables -> Actions -> Variables), e.g.
-#    projects/123456789/locations/global/workloadIdentityPools/github/providers/w-parliament
+# 2. Create the Workload Identity pool "github" and provider "w-parliament" for this repository
+#    (the workflow uses projects/1056654439816/locations/global/workloadIdentityPools/github/providers/w-parliament;
+#    override with the repository variable GCP_WORKLOAD_IDENTITY_PROVIDER if you use another one):
 #
-#    The workflow impersonates the w-parliament service account, so allow the GitHub principal to do that:
+#    gcloud services enable sts.googleapis.com iamcredentials.googleapis.com --project=shin-512818
+#    gcloud iam workload-identity-pools create github --project=shin-512818 --location=global
+#    gcloud iam workload-identity-pools providers create-oidc w-parliament --project=shin-512818 \
+#      --location=global --workload-identity-pool=github \
+#      --issuer-uri="https://token.actions.githubusercontent.com" \
+#      --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+#      --attribute-condition="assertion.repository=='Natalia-Gordon/w-parliament'"
+#
+#    The workflow impersonates the w-parliament service account, so allow the repository to do that:
 #    gcloud iam service-accounts add-iam-policy-binding w-parliament@shin-512818.iam.gserviceaccount.com \
-#      --role=roles/iam.workloadIdentityUser \
-#      --member="principalSet://iam.googleapis.com/projects/1056654439816/locations/global/workloadIdentityPools/POOL/attribute.repository/Natalia-Gordon/w-parliament"
+#      --project=shin-512818 --role=roles/iam.workloadIdentityUser \
+#      --member="principalSet://iam.googleapis.com/projects/1056654439816/locations/global/workloadIdentityPools/github/attribute.repository/Natalia-Gordon/w-parliament"
 #
 #    The service account itself needs: Cloud Run Admin, Artifact Registry Writer and
 #    Service Account User on the Cloud Run runtime service account.
@@ -39,7 +45,7 @@ env:
   REGION: 'us-central1'
   REPOSITORY: 'w-parliament'
   SERVICE: 'w-parliament'
-  WORKLOAD_IDENTITY_PROVIDER: '${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+  WORKLOAD_IDENTITY_PROVIDER: '${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER || ''projects/1056654439816/locations/global/workloadIdentityPools/github/providers/w-parliament'' }}'
   SERVICE_ACCOUNT: 'w-parliament@shin-512818.iam.gserviceaccount.com'
 
 jobs:
