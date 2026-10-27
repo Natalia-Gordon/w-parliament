@@ -1,9 +1,19 @@
 # Build the image, push it to Artifact Registry and deploy it to Cloud Run.
 #
 #   gcloud builds submit --config cloudbuild.yaml --project shin-512818 \
+#     --impersonate-service-account=w-parliament@shin-512818.iam.gserviceaccount.com \
 #     --substitutions=_SITE_URL=https://womenparliament.org
 #
+# The local upload is ~250 MB (media). To build from GitHub instead (much faster on slow uplinks):
+#
+#   gcloud builds submit --no-source --config cloudbuild.yaml --project shin-512818 \
+#     --impersonate-service-account=w-parliament@shin-512818.iam.gserviceaccount.com \
+#     --substitutions=_GIT_REPO=https://github.com/Natalia-Gordon/w-parliament.git,_GIT_BRANCH=main
+#
 # Prerequisite (once): an Artifact Registry Docker repository named ${_REPOSITORY} in ${_REGION}.
+# All build steps (push + deploy) run as the w-parliament service account below.
+
+serviceAccount: projects/shin-512818/serviceAccounts/w-parliament@shin-512818.iam.gserviceaccount.com
 
 substitutions:
   _REGION: us-central1
@@ -11,6 +21,8 @@ substitutions:
   _SERVICE: w-parliament
   _SITE_URL: https://womenparliament.org
   _CONTACT_FORM_ENDPOINT: ''
+  _GIT_REPO: ''
+  _GIT_BRANCH: main
 
 # The default build machine (e2-standard-2) is covered by the Cloud Build free tier; larger machine types are not.
 options:
@@ -18,15 +30,31 @@ options:
   dynamicSubstitutions: true
 
 steps:
+  - id: source
+    name: gcr.io/cloud-builders/git
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        if [ -n "${_GIT_REPO}" ]; then
+          git clone --depth=1 --branch "${_GIT_BRANCH}" "${_GIT_REPO}" /workspace/_ctx
+          git -C /workspace/_ctx log -1 --oneline
+        fi
+
   - id: build
     name: gcr.io/cloud-builders/docker
+    entrypoint: bash
     args:
-      - build
-      - --build-arg=SITE_URL=${_SITE_URL}
-      - --build-arg=CONTACT_FORM_ENDPOINT=${_CONTACT_FORM_ENDPOINT}
-      - --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID}
-      - --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:latest
-      - .
+      - -c
+      - |
+        CTX=.
+        if [ -d _ctx ]; then CTX=_ctx; fi
+        docker build \
+          --build-arg=SITE_URL=${_SITE_URL} \
+          --build-arg=CONTACT_FORM_ENDPOINT=${_CONTACT_FORM_ENDPOINT} \
+          --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${BUILD_ID} \
+          --tag=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:latest \
+          "$$CTX"
 
   - id: push
     name: gcr.io/cloud-builders/docker

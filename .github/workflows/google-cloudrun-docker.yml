@@ -12,14 +12,13 @@
 #    (Settings -> Secrets and variables -> Actions -> Variables), e.g.
 #    projects/123456789/locations/global/workloadIdentityPools/github/providers/w-parliament
 #
-#    Grant the GitHub principal:
-#    - Artifact Registry Writer (roles/artifactregistry.writer) on the w-parliament repository
-#    - Cloud Run Developer (roles/run.developer)
-#    - Service Account User (roles/iam.serviceAccountUser) on the Cloud Run runtime service account
+#    The workflow impersonates the w-parliament service account, so allow the GitHub principal to do that:
+#    gcloud iam service-accounts add-iam-policy-binding w-parliament@shin-512818.iam.gserviceaccount.com \
+#      --role=roles/iam.workloadIdentityUser \
+#      --member="principalSet://iam.googleapis.com/projects/1056654439816/locations/global/workloadIdentityPools/POOL/attribute.repository/Natalia-Gordon/w-parliament"
 #
-# 3. Make the service public once (Cloud Run Developer cannot change IAM policies):
-#    gcloud run services add-iam-policy-binding w-parliament --region=us-central1 \
-#      --member=allUsers --role=roles/run.invoker --project=shin-512818
+#    The service account itself needs: Cloud Run Admin, Artifact Registry Writer and
+#    Service Account User on the Cloud Run runtime service account.
 #
 # Optional repository variables: SITE_URL (default https://womenparliament.org), CONTACT_FORM_ENDPOINT.
 
@@ -41,6 +40,7 @@ env:
   REPOSITORY: 'w-parliament'
   SERVICE: 'w-parliament'
   WORKLOAD_IDENTITY_PROVIDER: '${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}'
+  SERVICE_ACCOUNT: 'w-parliament@shin-512818.iam.gserviceaccount.com'
 
 jobs:
   deploy:
@@ -60,13 +60,15 @@ jobs:
         with:
           project_id: '${{ env.PROJECT_ID }}'
           workload_identity_provider: '${{ env.WORKLOAD_IDENTITY_PROVIDER }}'
+          service_account: '${{ env.SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
 
       # Equivalent of: gcloud auth configure-docker us-central1-docker.pkg.dev
       - name: 'Docker Auth'
         uses: 'docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567' # docker/login-action@v3
         with:
           username: 'oauth2accesstoken'
-          password: '${{ steps.auth.outputs.auth_token }}'
+          password: '${{ steps.auth.outputs.access_token }}'
           registry: '${{ env.REGION }}-docker.pkg.dev'
 
       - name: 'Build and Push Container'
@@ -92,7 +94,7 @@ jobs:
           image: '${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE }}:${{ github.sha }}'
           # Lowest-cost profile for a static nginx site: request-based billing (CPU throttled outside requests),
           # scale to zero, gen1 (allows < 512Mi), high concurrency so one instance absorbs bursts.
-          flags: '--port=8080 --cpu=1 --memory=256Mi --concurrency=500 --min-instances=0 --max-instances=3 --timeout=30s --cpu-throttling --no-cpu-boost --execution-environment=gen1'
+          flags: '--allow-unauthenticated --port=8080 --cpu=1 --memory=256Mi --concurrency=500 --min-instances=0 --max-instances=3 --timeout=30s --cpu-throttling --no-cpu-boost --execution-environment=gen1'
 
       - name: 'Show output'
         run: |-
