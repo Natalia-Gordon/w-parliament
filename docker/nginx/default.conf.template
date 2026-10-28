@@ -28,6 +28,11 @@ server {
 
     include /etc/nginx/snippets/security-headers.conf;
 
+    # Single canonical host: www.example.org -> example.org (matches SITE_URL used for canonical links)
+    if ($host ~* ^www\.(.+)$) {
+        return 301 https://$1$request_uri;
+    }
+
     # Legacy WordPress URLs: /?p=123, /?page_id=45, /?attachment_id=6, attachment pages, removed pages
     if ($wp_redirect_post) {
         return 301 $wp_redirect_post;
