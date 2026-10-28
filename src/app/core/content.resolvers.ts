@@ -1,8 +1,13 @@
 import { inject } from '@angular/core';
 import { ResolveFn } from '@angular/router';
 import { ContentService, ListingKind, describeTerm } from './content.service';
-import { EntryView, HomeView, ListingView, TagsView } from './content.models';
-import { SeoService } from './seo.service';
+import { EntryView, HomeView, ListingView, TagsView, Term } from './content.models';
+import { Breadcrumb, SeoService } from './seo.service';
+
+const termCrumb = (term: Term): Breadcrumb => ({
+  name: term.name,
+  path: `/${term.taxonomy === 'category' ? 'category' : 'tag'}/${encodeURIComponent(term.slug)}`,
+});
 
 // Note: inject() is only available synchronously, so every resolver injects before its first await.
 
@@ -22,6 +27,11 @@ export const entryResolver: ResolveFn<EntryView | null> = async (route) => {
     return null;
   }
   const { entry } = view;
+  // Same trail as the visible breadcrumbs on the entry page
+  const trail = (['season', 'session'] as const)
+    .map((kind) => view.terms.find((t) => t.kind === kind))
+    .filter((t): t is Term => !!t)
+    .map(termCrumb);
   seo.update({
     title: entry.speaker ? `${entry.title} | ${entry.speaker}` : entry.title,
     description: entry.excerpt,
@@ -29,6 +39,7 @@ export const entryResolver: ResolveFn<EntryView | null> = async (route) => {
     image: entry.image?.src,
     type: entry.type === 'post' ? 'article' : 'website',
     noIndex: entry.isEmpty,
+    breadcrumbs: [...trail, { name: entry.title, path: entry.path }],
   });
   return view;
 };
@@ -47,6 +58,9 @@ export const listingResolver: ResolveFn<ListingView | null> = async (route) => {
     title: view.page > 1 ? `${view.title} – עמוד ${view.page}` : view.title,
     description: view.term ? describeTerm(view.term) : view.description,
     path: view.page > 1 ? `${view.basePath}/page/${view.page}` : view.basePath,
+    breadcrumbs: view.term
+      ? [{ name: 'מפתח נושאים', path: '/tags' }, termCrumb(view.term)]
+      : [{ name: view.title, path: '/posts' }],
   });
   return view;
 };
@@ -58,6 +72,7 @@ export const tagsResolver: ResolveFn<TagsView> = async () => {
     title: 'מפתח נושאים, מושבים ודוברות',
     description: 'כל הנושאים, המושבים והדוברות שהשתתפו בפרלמנט נשים',
     path: '/tags',
+    breadcrumbs: [{ name: 'מפתח נושאים', path: '/tags' }],
   });
   return view;
 };

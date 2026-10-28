@@ -10,7 +10,17 @@ export interface SeoData {
   image?: string | null;
   type?: 'website' | 'article';
   noIndex?: boolean;
+  /** Trail below the home page; rendered as schema.org BreadcrumbList JSON-LD. */
+  breadcrumbs?: Breadcrumb[];
 }
+
+export interface Breadcrumb {
+  name: string;
+  /** URL-encoded path, e.g. `/tag/%D7%90` */
+  path: string;
+}
+
+const BREADCRUMBS_SCRIPT_ID = 'ld-breadcrumbs';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -41,6 +51,27 @@ export class SeoService {
     else this.meta.removeTag('property="og:image"');
     this.setName('twitter:card', image ? 'summary_large_image' : 'summary');
     this.setCanonical(url);
+    this.setBreadcrumbs(data.breadcrumbs ?? [], baseUrl);
+  }
+
+  private setBreadcrumbs(trail: Breadcrumb[], baseUrl: string): void {
+    this.document.getElementById(BREADCRUMBS_SCRIPT_ID)?.remove();
+    if (!trail.length) return;
+
+    const items = [{ name: 'דף הבית', path: '/' }, ...trail].map((crumb, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumb.name,
+      item: `${baseUrl}${crumb.path === '/' ? '/' : crumb.path}`,
+    }));
+    const script = this.document.createElement('script');
+    script.id = BREADCRUMBS_SCRIPT_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items }).replace(
+      /</g,
+      '\\u003c',
+    );
+    this.document.head.appendChild(script);
   }
 
   private setName(name: string, content: string): void {

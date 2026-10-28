@@ -776,6 +776,19 @@ for (const item of items) {
     if (target && oldSlug && !entryBySlug.has(oldSlug)) pathRedirects.set(`/${oldSlug}`, target);
   }
 }
+
+// Manually maintained redirects for old URLs that are not in the export (e.g. reported as 404 in Search Console)
+const LEGACY_REDIRECTS_FILE = join(ROOT, 'scripts', 'legacy-redirects.json');
+if (existsSync(LEGACY_REDIRECTS_FILE)) {
+  const knownPaths = new Set(['/', '/posts', '/tags', '/search', ...[...entryRecords.values()].map((r) => r.path)]);
+  for (const [from, to] of Object.entries(JSON.parse(readFileSync(LEGACY_REDIRECTS_FILE, 'utf8')))) {
+    const source = safeDecodeURIComponent(from).replace(/\/+$/, '') || '/';
+    const target = encodeURI(safeDecodeURIComponent(to));
+    if (!knownPaths.has(target) && !/^\/(tag|category)\//.test(target)) warn(`legacy-redirects.json: target ${to} is not a known page`);
+    pathRedirects.set(source, target);
+  }
+}
+
 const pathLines = [...pathRedirects]
   .filter(([, target]) => target)
   .flatMap(([from, target]) => [`  ${nginxString(from)} ${nginxString(target)};`, `  ${nginxString(`${from}/`)} ${nginxString(target)};`]);
