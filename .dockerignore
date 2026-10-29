@@ -9,6 +9,8 @@ coverage
 public/content
 public/sitemap.xml
 public/robots.txt
+public/llms.txt
+public/humans.txt
 docker/nginx/wp-redirects.conf
 scripts/.generated
 

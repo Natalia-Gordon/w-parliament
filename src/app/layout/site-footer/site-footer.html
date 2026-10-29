@@ -26,6 +26,16 @@
     </nav>
   </div>
   <div class="footer__bottom">
-    <div class="container">© {{ site()?.year }} {{ site()?.name }} · תנועת ש.י.ן – לשוויון ייצוג נשים. כל הזכויות שמורות.</div>
+    <div class="container footer__bottom-inner">
+      <span>© {{ site()?.year }} {{ site()?.name }} · תנועת ש.י.ן – לשוויון ייצוג נשים. כל הזכויות שמורות.</span>
+      @if (site()?.maintainer; as m) {
+        <p id="site-credits" class="footer__credits">
+          {{ m.role }}:
+          <a [href]="m.sameAs[0] ?? 'mailto:' + m.email" rel="author noopener" target="_blank">{{ m.name }}</a>, {{ m.jobTitle }} · לשאלות בנושאי
+          {{ m.contactTopics }}:
+          <a [href]="'mailto:' + m.email"><bdi>{{ m.email }}</bdi></a>
+        </p>
+      }
+    </div>
   </div>
 </footer>

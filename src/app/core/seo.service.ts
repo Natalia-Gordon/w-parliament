@@ -21,6 +21,7 @@ export interface Breadcrumb {
 }
 
 const BREADCRUMBS_SCRIPT_ID = 'ld-breadcrumbs';
+const SITE_SCRIPT_ID = 'ld-site';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -52,6 +53,52 @@ export class SeoService {
     this.setName('twitter:card', image ? 'summary_large_image' : 'summary');
     this.setCanonical(url);
     this.setBreadcrumbs(data.breadcrumbs ?? [], baseUrl);
+    this.setSiteIdentity();
+  }
+
+  /** Site-wide JSON-LD: the WebSite and the person who created and maintains it. */
+  private setSiteIdentity(): void {
+    const site = this.content.site();
+    const maintainer = site?.maintainer;
+    if (!site || !maintainer || this.document.getElementById(SITE_SCRIPT_ID)) return;
+
+    this.setName('author', `${maintainer.name} (${maintainer.alternateName})`);
+    this.setName('designer', `${maintainer.name} (${maintainer.alternateName}), ${maintainer.jobTitle}`);
+
+    const personId = `${site.url}/#maintainer`;
+    const graph = [
+      {
+        '@type': 'WebSite',
+        '@id': `${site.url}/#website`,
+        url: `${site.url}/`,
+        name: site.name,
+        description: site.tagline,
+        inLanguage: site.locale,
+        creator: { '@id': personId },
+        maintainer: { '@id': personId },
+      },
+      {
+        '@type': 'Person',
+        '@id': personId,
+        name: maintainer.name,
+        alternateName: maintainer.alternateName,
+        jobTitle: [maintainer.jobTitle, maintainer.jobTitleEn],
+        description: maintainer.description,
+        email: `mailto:${maintainer.email}`,
+        knowsAbout: maintainer.knowsAbout,
+        knowsLanguage: ['he', 'en'],
+        sameAs: maintainer.sameAs,
+      },
+    ];
+    this.appendJsonLd(SITE_SCRIPT_ID, { '@context': 'https://schema.org', '@graph': graph });
+  }
+
+  private appendJsonLd(id: string, data: unknown): void {
+    const script = this.document.createElement('script');
+    script.id = id;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(data).replace(/</g, '\\u003c');
+    this.document.head.appendChild(script);
   }
 
   private setBreadcrumbs(trail: Breadcrumb[], baseUrl: string): void {
@@ -64,14 +111,7 @@ export class SeoService {
       name: crumb.name,
       item: `${baseUrl}${crumb.path === '/' ? '/' : crumb.path}`,
     }));
-    const script = this.document.createElement('script');
-    script.id = BREADCRUMBS_SCRIPT_ID;
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items }).replace(
-      /</g,
-      '\\u003c',
-    );
-    this.document.head.appendChild(script);
+    this.appendJsonLd(BREADCRUMBS_SCRIPT_ID, { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items });
   }
 
   private setName(name: string, content: string): void {

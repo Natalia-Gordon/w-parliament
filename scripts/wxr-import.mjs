@@ -674,6 +674,17 @@ const headerAttachment = items
 const siteIcon = str(channel.image?.url);
 if (siteIcon) rewriteSiteUrl(siteIcon, 'site icon');
 
+// Who designed, built and maintains the site (scripts/site-credits.json)
+const CREDITS_FILE = join(ROOT, 'scripts', 'site-credits.json');
+const maintainer = existsSync(CREDITS_FILE) ? JSON.parse(readFileSync(CREDITS_FILE, 'utf8')) : null;
+if (maintainer) {
+  // Link the first bold mention of the maintainer's name in the content to the footer credits
+  const nameRe = new RegExp(`<strong>(\\s*${maintainer.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*)</strong>`);
+  for (const entry of entries) {
+    if (nameRe.test(entry.html)) entry.html = entry.html.replace(nameRe, '<strong><a href="#site-credits">$1</a></strong>');
+  }
+}
+
 const site = {
   name: decodeEntities(str(channel.title)) || 'פרלמנט נשים',
   tagline,
@@ -688,6 +699,7 @@ const site = {
   generatedAt: new Date().toISOString(),
   year: new Date().getFullYear(),
   menus: buildMenus(),
+  maintainer,
 };
 
 /** WordPress menus plus an archive menu exposing the listings and pages missing from the WP menus. */
@@ -752,6 +764,67 @@ const sitemap =
   '\n</urlset>\n';
 writeFileSync(join(PUBLIC_DIR, 'sitemap.xml'), sitemap);
 writeFileSync(join(PUBLIC_DIR, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+
+// llms.txt (https://llmstxt.org) and humans.txt (https://humanstxt.org) for AI assistants and credits
+const absolute = (path) => `${SITE_URL}${path === '/' ? '/' : path}`;
+const llmsLines = [
+  `# ${site.name}`,
+  '',
+  `> ${site.tagline}`,
+  '',
+  `ארכיון ההרצאות, התקצירים והמאמרים של ${site.name} – ${posts.length} הרצאות מ-${sortedTerms.filter((t) => t.kind === 'session').length} מושבים, החל משנת 1999. פרויקט של תנועת ש.י.ן – לשוויון ייצוג נשים.`,
+  '',
+  '## עמודים מרכזיים',
+  '',
+  ...site.menus.main.flatMap((item) => [
+    `- [${item.title}](${absolute(item.path)})`,
+    ...(item.children ?? []).flatMap((child) => [
+      `  - [${child.title}](${absolute(child.path)})`,
+      ...(child.children ?? []).map((leaf) => `    - [${leaf.title}](${absolute(leaf.path)})`),
+    ]),
+  ]),
+  '',
+  '## שנות פעילות',
+  '',
+  ...sortedTerms
+    .filter((t) => t.kind === 'season')
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((t) => `- [${t.name}](${absolute(termPath(t))}): ${t.count} הרצאות`),
+  '',
+  `מפת האתר המלאה: ${SITE_URL}/sitemap.xml`,
+];
+if (maintainer) {
+  llmsLines.push(
+    '',
+    '## עיצוב, פיתוח ותחזוקת האתר',
+    '',
+    `האתר עוצב, נבנה ומתוחזק על ידי ${maintainer.name} (${maintainer.alternateName}), ${maintainer.jobTitle} (${maintainer.jobTitleEn}), מעצבת ובונה אתרים.`,
+    `לשאלות בנושאי ${maintainer.contactTopics}: ${maintainer.email}`,
+    ...maintainer.sameAs.map((url) => `- ${url}`),
+  );
+}
+writeFileSync(join(PUBLIC_DIR, 'llms.txt'), `${llmsLines.join('\n')}\n`);
+
+if (maintainer) {
+  writeFileSync(
+    join(PUBLIC_DIR, 'humans.txt'),
+    [
+      '/* TEAM */',
+      `  Design, development & maintenance: ${maintainer.alternateName} (${maintainer.name})`,
+      `  Role: ${maintainer.jobTitleEn}, web designer & developer`,
+      `  Contact: ${maintainer.email}`,
+      ...maintainer.sameAs.map((url) => `  Profile: ${url}`),
+      '',
+      '/* SITE */',
+      `  Site: ${site.name} – ${SITE_URL}`,
+      '  Language: Hebrew',
+      '  Standards: HTML5, CSS3, schema.org',
+      '  Components: Angular, nginx, Google Cloud Run',
+      `  Last update: ${site.generatedAt.slice(0, 10)}`,
+      '',
+    ].join('\n'),
+  );
+}
 
 // nginx redirects for legacy WordPress URLs (?p=, ?page_id=, attachment pages, removed pages)
 const nginxString = (value) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;

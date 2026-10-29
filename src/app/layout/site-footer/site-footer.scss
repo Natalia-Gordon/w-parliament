@@ -72,6 +72,34 @@
   color: rgb(255 255 255 / 60%);
 }
 
+.footer__bottom-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+}
+
+.footer__credits {
+  margin: 0;
+  scroll-margin-bottom: 2rem;
+
+  a {
+    color: rgb(255 255 255 / 85%);
+
+    &:hover,
+    &:focus-visible {
+      color: #fff;
+    }
+  }
+
+  &:target {
+    color: #fff;
+    outline: 2px solid var(--brand-red);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+}
+
 @media (max-width: 800px) {
   .footer__inner {
     grid-template-columns: 1fr 1fr;

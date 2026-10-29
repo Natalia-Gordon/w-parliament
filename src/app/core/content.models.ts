@@ -25,6 +25,21 @@ export interface SiteInfo {
   generatedAt: string;
   year: number;
   menus: { main: MenuItem[]; footer: MenuItem[] };
+  maintainer: Maintainer | null;
+}
+
+/** Person who designed, built and maintains the site (scripts/site-credits.json). */
+export interface Maintainer {
+  name: string;
+  alternateName: string;
+  jobTitle: string;
+  jobTitleEn: string;
+  description: string;
+  role: string;
+  contactTopics: string;
+  email: string;
+  knowsAbout: string[];
+  sameAs: string[];
 }
 
 export type TermKind = 'session' | 'season' | 'person' | 'topic' | 'category';

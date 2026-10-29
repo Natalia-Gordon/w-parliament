@@ -37,6 +37,12 @@ export class RichContent {
     }
 
     const href = anchor.getAttribute('href');
+    // With <base href="/"> a bare "#id" would navigate to the home page, so scroll in place instead
+    if (href?.startsWith('#')) {
+      event.preventDefault();
+      this.host.nativeElement.ownerDocument.getElementById(href.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     if (!href || anchor.target === '_blank' || !href.startsWith('/') || href.startsWith('//') || href.startsWith('/wp-content/')) return;
     event.preventDefault();
     void this.router.navigateByUrl(href);
