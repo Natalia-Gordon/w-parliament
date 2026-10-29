@@ -677,6 +677,12 @@ if (siteIcon) rewriteSiteUrl(siteIcon, 'site icon');
 // Who designed, built and maintains the site (scripts/site-credits.json)
 const CREDITS_FILE = join(ROOT, 'scripts', 'site-credits.json');
 const maintainer = existsSync(CREDITS_FILE) ? JSON.parse(readFileSync(CREDITS_FILE, 'utf8')) : null;
+if (maintainer?.whatsapp?.phone) {
+  const { phone, message } = maintainer.whatsapp;
+  maintainer.telephone = `+${phone}`;
+  maintainer.whatsappUrl = `https://wa.me/${phone}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+  delete maintainer.whatsapp;
+}
 if (maintainer) {
   // Link the first bold mention of the maintainer's name in the content to the footer credits
   const nameRe = new RegExp(`<strong>(\\s*${maintainer.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*)</strong>`);
@@ -800,6 +806,7 @@ if (maintainer) {
     '',
     `האתר עוצב, נבנה ומתוחזק על ידי ${maintainer.name} (${maintainer.alternateName}), ${maintainer.jobTitle} (${maintainer.jobTitleEn}), מעצבת ובונה אתרים.`,
     `לשאלות בנושאי ${maintainer.contactTopics}: ${maintainer.email}`,
+    ...(maintainer.whatsappUrl ? [`- WhatsApp: ${maintainer.whatsappUrl}`] : []),
     ...maintainer.sameAs.map((url) => `- ${url}`),
   );
 }
@@ -813,6 +820,7 @@ if (maintainer) {
       `  Design, development & maintenance: ${maintainer.alternateName} (${maintainer.name})`,
       `  Role: ${maintainer.jobTitleEn}, web designer & developer`,
       `  Contact: ${maintainer.email}`,
+      ...(maintainer.whatsappUrl ? [`  WhatsApp: ${maintainer.whatsappUrl}`] : []),
       ...maintainer.sameAs.map((url) => `  Profile: ${url}`),
       '',
       '/* SITE */',

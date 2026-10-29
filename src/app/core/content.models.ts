@@ -38,6 +38,12 @@ export interface Maintainer {
   role: string;
   contactTopics: string;
   email: string;
+  /** Prefilled subject for the mailto link */
+  emailSubject?: string;
+  /** E.164, e.g. +972543255952 */
+  telephone?: string;
+  /** wa.me link with the prefilled message */
+  whatsappUrl?: string;
   knowsAbout: string[];
   sameAs: string[];
 }

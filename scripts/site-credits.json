@@ -7,6 +7,11 @@
   "role": "עיצוב, פיתוח ותחזוקת האתר",
   "contactTopics": "תחזוקה, עיצוב ופיתוח",
   "email": "g.nataley@gmail.com",
+  "emailSubject": "פניה מהאתר פרלמנט נשים בנושא תחזוקה",
+  "whatsapp": {
+    "phone": "972543255952",
+    "message": "שלום נטליה, אני פונה אלך דרך האתר של פרלמנט נשים בנושא תחזוקה של האתר, אשמח לשוחח בזמנך הפנוי."
+  },
   "knowsAbout": ["עיצוב אתרים", "בניית אתרים", "פיתוח תוכנה", "Web Design", "Web Development", "Angular", "Google Cloud"],
-  "sameAs": ["https://github.com/Natalia-Gordon"]
+  "sameAs": ["https://github.com/Natalia-Gordon", "https://www.linkedin.com/in/natalia-gordon-7979514/"]
 }

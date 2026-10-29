@@ -88,6 +88,15 @@ export class SeoService {
         knowsAbout: maintainer.knowsAbout,
         knowsLanguage: ['he', 'en'],
         sameAs: maintainer.sameAs,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'technical support',
+          description: `שאלות בנושאי ${maintainer.contactTopics} של האתר`,
+          email: maintainer.email,
+          ...(maintainer.telephone ? { telephone: maintainer.telephone } : {}),
+          ...(maintainer.whatsappUrl ? { url: maintainer.whatsappUrl } : {}),
+          availableLanguage: ['he', 'en'],
+        },
       },
     ];
     this.appendJsonLd(SITE_SCRIPT_ID, { '@context': 'https://schema.org', '@graph': graph });

@@ -80,24 +80,70 @@
 }
 
 .footer__credits {
-  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
   scroll-margin-bottom: 2rem;
 
-  a {
-    color: rgb(255 255 255 / 85%);
-
-    &:hover,
-    &:focus-visible {
-      color: #fff;
-    }
+  p {
+    margin: 0;
   }
 
-  &:target {
+  strong {
     color: #fff;
-    outline: 2px solid var(--brand-red);
-    outline-offset: 4px;
-    border-radius: 4px;
+    font-weight: 600;
   }
+}
+
+.footer__contact {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  color: #fff;
+  background: rgb(255 255 255 / 12%);
+  transition:
+    background 0.15s,
+    transform 0.15s;
+
+  svg {
+    fill: currentColor;
+  }
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+  }
+}
+
+.footer__icon--github:hover,
+.footer__icon--github:focus-visible {
+  background: #24292f;
+}
+
+.footer__icon--linkedin:hover,
+.footer__icon--linkedin:focus-visible {
+  background: #0a66c2;
+}
+
+.footer__icon--whatsapp:hover,
+.footer__icon--whatsapp:focus-visible {
+  background: #25d366;
+}
+
+.footer__icon--email:hover,
+.footer__icon--email:focus-visible {
+  background: var(--brand-red);
 }
 
 @media (max-width: 800px) {
