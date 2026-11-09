@@ -769,7 +769,33 @@ const sitemap =
     .join('\n') +
   '\n</urlset>\n';
 writeFileSync(join(PUBLIC_DIR, 'sitemap.xml'), sitemap);
-writeFileSync(join(PUBLIC_DIR, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+// SEO-tool crawlers bring no visitors but download whole pages and PDFs; search engines and AI assistants stay allowed.
+const blockedCrawlers = [
+  'SemrushBot',
+  'AhrefsBot',
+  'MJ12bot',
+  'DotBot',
+  'PetalBot',
+  'DataForSeoBot',
+  'BLEXBot',
+  'Barkrowler',
+  'serpstatbot',
+  'SeekportBot',
+  'MegaIndex.ru',
+];
+writeFileSync(
+  join(PUBLIC_DIR, 'robots.txt'),
+  [
+    ...blockedCrawlers.map((agent) => `User-agent: ${agent}`),
+    'Disallow: /',
+    '',
+    'User-agent: *',
+    'Allow: /',
+    '',
+    `Sitemap: ${SITE_URL}/sitemap.xml`,
+    '',
+  ].join('\n'),
+);
 
 // llms.txt (https://llmstxt.org) and humans.txt (https://humanstxt.org) for AI assistants and credits
 const absolute = (path) => `${SITE_URL}${path === '/' ? '/' : path}`;
